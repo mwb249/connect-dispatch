@@ -1,7 +1,10 @@
-"""The clemis module contains functions related to obtaining and manipulating incident data received through the CLEMIS
-CAD web service."""
+"""
+The clemis module contains functions related to obtaining and manipulating incident data received through the CLEMIS
+CAD web service or D-Card web page.
+"""
 
-import datetime
+from datetime import datetime, timedelta
+import pytz
 import requests
 import re
 import config
@@ -11,11 +14,13 @@ from xml.etree import ElementTree
 
 
 def getxml(hrs):
-    """Makes a SOAP request to CLEMIS CAD web service and returns an XML object containing the CAD incident data for the
-    past number of hours specified in the parameters."""
+    """
+    Makes a SOAP request to CLEMIS CAD web service and returns an XML object containing the CAD incident data for the
+    past number of hours specified in the parameters.
+    """
 
     # Get datetime string for the specified previous hours
-    time = datetime.datetime.now() - datetime.timedelta(hours=hrs)
+    time = datetime.now() - timedelta(hours=hrs)
     last_update_datetime = time.strftime('%Y%m%d%H%M%S')
 
     # Headers
@@ -50,8 +55,10 @@ def getxml(hrs):
 
 
 def incidentlist(xml):
-    """Takes the full incident XML and returns a list of dictionaries with 'agency code' and 'incident number' tag and
-    text elements."""
+    """
+    Takes the full incident XML and returns a list of dictionaries with 'agency code' and 'incident number' tag and
+    text elements.
+    """
     i_list = []
     for i in xml.iter('Incident'):
         i_dict = dict()
@@ -62,8 +69,10 @@ def incidentlist(xml):
 
 
 def comparelists(i_list, i_list_check):
-    """Compares current and previous incident lists and returns a list of dictionaries with incidents not found in the
-    previous list."""
+    """
+    Compares current and previous incident lists and returns a list of dictionaries with incidents not found in the
+    previous list.
+    """
     new_i_list = []
     for i in i_list:
         if i not in i_list_check:
@@ -90,7 +99,9 @@ def comment_search(search_str, comments):
 
 
 def inc_code_correct(inc_type_code, inc_type_desc):
-    """Parses and corrects OC CAD Incident Type Description."""
+    """
+    Parses and corrects OC CAD Incident Type Description.
+    """
     if inc_type_code == 'BOX_CO':
         inc_type_code = 'BOX_COM'
     elif inc_type_code == 'BOX_RE':
@@ -111,7 +122,9 @@ def inc_code_correct(inc_type_code, inc_type_desc):
 
 
 def inc_desc_correct(inc_type_desc):
-    """Parses and corrects the OC CAD Incident Type Code."""
+    """
+    Parses and corrects the OC CAD Incident Type Code.
+    """
     if inc_type_desc == 'COMMERCIAL FIRE BOX':
         inc_type_desc = 'COMMERCIAL FIRE (BOX ALARM)'
     elif inc_type_desc == 'RESIDENTIAL FIRE BOX':
@@ -152,7 +165,9 @@ def inc_desc_correct(inc_type_desc):
 
 
 def inc_cat_find(inc_type_desc):
-    """Determines the incident category based on the incident type description."""
+    """
+    Determines the incident category based on the incident type description.
+    """
     fire = ['Residential Structure Fire', 'Commercial Structure Fire', 'Residential Fire (Full Response)',
             'Commercial Fire (Full Response)', 'Residential Fire (Box Alarm)', 'Commercial Fire (Box Alarm)',
             'Vehicle Fire', 'Residential Fire (Still Response)']
@@ -189,9 +204,12 @@ def inc_cat_find(inc_type_desc):
     return category
 
 
-def inc_list_correct(inc_dict, unit_list):
+# TODO - Boolean (push=True), move all non-sync key/values there
+def incidentlist_ws(inc_dict, unit_list, push=False):
     """
-    Correct a list of incident dictionaries.
+    This function takes a 'raw' incident dictionary and unit list XML tree from the CLEMIS web service, and returns a
+    modified version of the incident dictionary. The 'push' boolean parameter specifies whether the list will be used
+    in a 'push' capacity (certain key/value pairs are only pushed to the GIS during the initial append).
     """
     # Correct incident_type_code and incident_type_desc
     inc_dict['incident_type_desc'] = inc_dict.pop('incident_type_description')
@@ -252,6 +270,9 @@ def inc_list_correct(inc_dict, unit_list):
     # Clear datetime
     inc_dict['datetime_clear'] = timeutils.incident_dt_ws(inc_dict['datetime_clear'])
 
+    # Created datetime
+    inc_dict['datetime_created'] = datetime.now(pytz.utc)
+
     # Chief Complaint
     match = re.search(r'CC: (.*)', inc_dict['comments_text'])
     chief_complaint = str(match.group(1) if match else None)
@@ -279,4 +300,173 @@ def inc_list_correct(inc_dict, unit_list):
 
     # Remove 'comments_text' key/value
     inc_dict.pop('comments_text')
+
+    # Add source CAD system
+    inc_dict['source_cad'] = 'clemis'
+
+    # Push only key/values
+    if push:
+        pass
     return inc_dict
+
+
+# TODO - Boolean (push=True), move all non-sync key/values there
+def incidentlist_email(inc_details, unit_details, comments, inc_url, push=False):
+    """
+    This function takes the three sections of a CLEMIS D-Card along with the incident URL, and returns a list of
+    incident dictionaries. The 'push' boolean parameter specifies whether the list will be used in a 'push'
+    capacity (certain key/value pairs are only pushed to the GIS during the initial append).
+    """
+    # Incident Number
+    incident_number = inc_details[1][1]
+
+    # Agency Code
+    agency_code = inc_details[2][1]
+
+    # Incident Type & Description
+    inc_type_and_desc = inc_details[3][1]
+    inc_type_and_desc = inc_type_and_desc.split(' ', 1)
+    incident_type_code = inc_type_and_desc[0]
+    incident_type_desc = inc_type_and_desc[1]
+    incident_type_code = inc_code_correct(incident_type_code, incident_type_desc)
+    incident_type_desc = inc_desc_correct(incident_type_desc)
+
+    # Address
+    inc_address_full = inc_details[4][1]
+    inc_address_list = inc_address_full.split(', ', 1)
+    address = inc_address_list[0].title()
+    # Remove 'Apt' from Address, if necessary
+    if 'Apt' in address:
+        match = re.search(r'(.*) Apt', address)
+        address = str(match.group(1) if match else None)
+        pass
+
+    # Apt Number
+    match = re.search(r'apt(.*),', inc_address_full, flags=re.IGNORECASE)
+    apt_number = str(match.group(1) if match else None)
+    apt_number = apt_number.strip()
+
+    # Location
+    location = inc_details[5][1]
+
+    # City Description
+    inc_address_list = inc_address_full.split(', ', 1)
+    city_desc = inc_address_list[1].title()
+    # Remove State from City Description, if necessary
+    if 'Mi' in city_desc:
+        match = re.search(r'(.*) Mi', city_desc)
+        city_desc = str(match.group(1) if match else None)
+        pass
+
+    # State
+    state = ''
+    for agency_dict in config.agency_list:
+        if agency_dict['agency_code'] == agency_code:
+            state = agency_dict['state_code']
+        else:
+            state = None
+
+    # Incident Times
+    datetime_call = timeutils.incident_dt_email(inc_details[6][1])
+    datetime_dispatched = timeutils.incident_dt_email(inc_details[7][1])
+    datetime_enroute = timeutils.incident_dt_email(inc_details[8][1])
+    datetime_arrival = timeutils.incident_dt_email(inc_details[9][1])
+    datetime_clear = timeutils.incident_dt_email(inc_details[10][1])
+
+    # Datetime created
+    datetime_created = datetime.now(pytz.utc)
+
+    # Units Assigned
+    units_assigned = []
+    for unit in unit_details:
+        try:
+            unit = unit[0]
+            units_assigned.append(unit)
+        except IndexError:
+            pass
+    units_assigned = ' '.join(units_assigned)
+
+    # Chief Complaint
+    chief_complaint = comment_search('CC:', comments)
+    if not chief_complaint:
+        chief_complaint = ''
+        pass
+    match = re.search(r'CC: (.*)', chief_complaint)
+    chief_complaint = str(match.group(1) if match else None)
+    chief_complaint = str(chief_complaint.strip()).title()
+
+    # ProQA Code
+    proqa_code = comment_search('DISPATCH CODE:', comments)
+    if not proqa_code:
+        proqa_code = ''
+        pass
+    match = re.search(r'DISPATCH CODE: (.*?)\(', proqa_code)
+    proqa_code = str(match.group(1) if match else None)
+    proqa_code = proqa_code.strip()
+
+    # ProQA Suffix Code
+    proqa_suffix_code = comment_search('SUFFIX:', comments)
+    if not proqa_suffix_code:
+        proqa_suffix_code = ''
+        pass
+    match = re.search(r'SUFFIX: (.*?)\(', proqa_suffix_code)
+    proqa_suffix_code = str(match.group(1) if match else None)
+    proqa_suffix_code = proqa_suffix_code.strip()
+
+    # ProQA Code Description
+    proqa_desc = comment_search('DISPATCH CODE:', comments)
+    if not proqa_desc:
+        proqa_desc = ''
+        pass
+    match = re.search(r'DISPATCH CODE:.*?\((.*)\)', proqa_desc)
+    proqa_desc = str(match.group(1) if match else None)
+    proqa_desc = str(proqa_desc.strip()).title()
+
+    # ProQA Suffix Code Description
+    proqa_suffix_desc = comment_search('SUFFIX:', comments)
+    if not proqa_suffix_desc:
+        proqa_suffix_desc = ''
+        pass
+    match = re.search(r'SUFFIX:.*?\((.*)\)', proqa_suffix_desc)
+    proqa_suffix_desc = str(match.group(1) if match else None)
+    proqa_suffix_desc = str(proqa_suffix_desc.strip()).title()
+
+    # Incident Category
+    incident_category = inc_cat_find(incident_type_desc)
+
+    # Push only key/values
+    if push:
+        pass
+
+    # Construct a list of incident dictionaries
+    i_list = []
+    i_dict = {
+        'incident_number': incident_number,
+        'incident_type_code': incident_type_code,
+        'incident_type_desc': incident_type_desc,
+        'incident_category': incident_category,
+        'incident_temp_url': inc_url,
+        'agency_code': agency_code,
+        'address': address,
+        'location': location,
+        'apt_number': apt_number,
+        'city_desc': city_desc,
+        'state': state,
+        'low_street': None,
+        'high_street': None,
+        'datetime_call': datetime_call,
+        'datetime_dispatched': datetime_dispatched,
+        'datetime_enroute': datetime_enroute,
+        'datetime_arrival': datetime_arrival,
+        'datetime_clear': datetime_clear,
+        'datetime_created': datetime_created,
+        'units_assigned': units_assigned,
+        'chief_complaint': chief_complaint,
+        'proqa_code': proqa_code,
+        'proqa_suffix_code': proqa_suffix_code,
+        'proqa_desc': proqa_desc,
+        'proqa_suffix_desc': proqa_suffix_desc,
+        'source_cad': 'clemis'
+    }
+    i_list.append(i_dict)
+    return i_list

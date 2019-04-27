@@ -22,7 +22,7 @@ if config.use_cad_ws:
     # Update incident_sync file
     incident_sync = []
     for i in incident_list_full:
-        i = clemis.inc_list_correct(i, unit_list_full)
+        i = clemis.incidentlist_ws(i, unit_list_full)
         incident_sync.append(i)
         pass
 
@@ -218,9 +218,11 @@ else:
                 file_incident_sync = open(config.watch_dir + '/incident_sync/incident_sync.p', 'wb')
                 pickle.dump(incident_sync, file_incident_sync)
                 file_incident_sync.close()
-                # Log update
-                logging.info('incident_sync updated by sync_clemis')
                 pass
-            pass
-        pass
+            else:
+                del i
+        # Write incident list to incident_list file
+        file_incident_list = open(config.watch_dir + '/clemis/email_incident_list/incident_list.p', 'wb')
+        pickle.dump(incident_list, file_incident_list)
+        file_incident_list.close()
     pass
