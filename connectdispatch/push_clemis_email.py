@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 import email
 import pickle
 import logging
+import pytz
+from datetime import datetime
 import config
 from clemis import clemis, timeutils
 
@@ -19,17 +21,12 @@ subject = msg['Subject']
 
 # Parse incident URL from email subject
 match = re.search(r'(https://.*?/.*?/.*?)/', subject)
-inc_url = str(match.group(1) if match else None)
-inc_url = inc_url.strip()
-
-# Make Get request and parse HTML return with BeautifulSoup
-inc_page = requests.get(inc_url)
-soup = BeautifulSoup(inc_page.text, 'html.parser')
-
-# Parse incident URL from email subject
-match = re.search(r'(https://.*?/.*?/.*?)/', subject)
 incident_temp_url = str(match.group(1) if match else None)
 incident_temp_url = incident_temp_url.strip()
+
+# Make Get request and parse HTML return with BeautifulSoup
+inc_page = requests.get(incident_temp_url)
+soup = BeautifulSoup(inc_page.text, 'html.parser')
 
 # Build lists from HTML tables
 inc_details = clemis.listfromtable(soup, 2)
@@ -91,6 +88,9 @@ datetime_dispatched = timeutils.incident_dt_email(inc_details[7][1])
 datetime_enroute = timeutils.incident_dt_email(inc_details[8][1])
 datetime_arrival = timeutils.incident_dt_email(inc_details[9][1])
 datetime_clear = timeutils.incident_dt_email(inc_details[10][1])
+
+# Datetime created
+datetime_created = datetime.now(pytz.utc)
 
 # Units Assigned
 units_assigned = []
@@ -171,12 +171,14 @@ incident_dict = {
     'datetime_enroute': datetime_enroute,
     'datetime_arrival': datetime_arrival,
     'datetime_clear': datetime_clear,
+    'datetime_created': datetime_created,
     'units_assigned': units_assigned,
     'chief_complaint': chief_complaint,
     'proqa_code': proqa_code,
     'proqa_suffix_code': proqa_suffix_code,
     'proqa_desc': proqa_desc,
-    'proqa_suffix_desc': proqa_suffix_desc
+    'proqa_suffix_desc': proqa_suffix_desc,
+    'source_cad': 'clemis'
 }
 incident_push.append(incident_dict)
 
@@ -186,3 +188,23 @@ pickle.dump(incident_push, file_incident_push)
 file_incident_push.close()
 # Log update
 logging.info('incident_push updated by email_clemis')
+
+# Append new incident to email_incident_list (incident_temp_url & datetime_created)
+# Open previous incident list
+try:
+    file_incident_list = open(config.watch_dir + '/clemis/email_incident_list/incident_list.p', 'rb')
+    incident_list = pickle.load(file_incident_list)
+except FileNotFoundError:
+    incident_list = []
+
+# Append 'new' incident to list
+incident_list_dict = {
+    'incident_temp_url': incident_temp_url,
+    'datetime_created': datetime_created
+}
+incident_list.append(incident_list_dict)
+
+# Write incident list to file
+file_incident_list = open(config.watch_dir + '/clemis/email_incident_list/incident_list.p', 'wb')
+pickle.dump(incident_list, file_incident_list)
+file_incident_list.close()

@@ -2,8 +2,12 @@
 
 import os
 
+"""CAD web service"""
 # Web service URLs
 cad_url_clemis = 'https://apps.clemis.org/CDEWebService/CDEService.asmx'
+
+# Use CAD web service
+use_cad_ws = False
 
 # CAD credentials
 cad_user_clemis = 'example_caduser'
