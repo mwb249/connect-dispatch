@@ -54,7 +54,7 @@ if incident_list_new:
     for i in incident_list_full:
         for new in incident_list_new:
             if i['incident_number'] == new['incident_number']:
-                i = clemis.incidentlist_ws(i, unit_list_full, push=True)
+                i = clemis.incidentdict_ws(i, unit_list_full, push=True)
                 incident_push.append(i)
                 pass
             pass

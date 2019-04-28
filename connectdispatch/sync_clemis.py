@@ -20,7 +20,8 @@ if config.use_cad_ws:
     # Update incident_sync file
     incident_sync = []
     for i in incident_list_full:
-        i = clemis.incidentlist_ws(i, unit_list_full)
+        i = clemis.incidentdict_ws(i, unit_list_full)
+        # TODO - Add code with boolean from config.py that adds incident_temp_url & location key/value pairs to dict
         incident_sync.append(i)
         pass
 

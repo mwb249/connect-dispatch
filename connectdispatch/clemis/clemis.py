@@ -204,11 +204,11 @@ def inc_cat_find(inc_type_desc):
     return category
 
 
-def incidentlist_ws(i_dict, unit_list, push=False):
+def incidentdict_ws(i_dict, unit_list, push=False):
     """
-    This function takes a 'raw' incident dictionary and unit list XML tree from the CLEMIS web service, and returns a
-    modified version of the incident dictionary. The 'push' boolean parameter specifies whether the list will be used
-    in a 'push' capacity (certain key/value pairs are only pushed to the GIS during the initial append).
+    This function takes a 'raw' incident dictionary and unit list from the CLEMIS web service, and returns a modified
+    version of the incident dictionary. The 'push' boolean parameter specifies whether the list will be used in a
+    'push' capacity (certain key/value pairs are only pushed to the GIS during the initial append).
     """
     # Correct incident_type_code and incident_type_desc
     i_dict['incident_type_desc'] = i_dict.pop('incident_type_description')

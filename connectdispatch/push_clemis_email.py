@@ -59,6 +59,7 @@ incident_list_dict['agency_code'] = incident_dict['agency_code']
 incident_list_dict['incident_number'] = incident_dict['incident_number']
 incident_list_dict['incident_temp_url'] = incident_dict['incident_temp_url']
 incident_list_dict['datetime_created'] = incident_dict['datetime_created']
+incident_list_dict['location'] = incident_dict['location']
 incident_list.append(incident_list_dict)
 
 # Write incident list to file
