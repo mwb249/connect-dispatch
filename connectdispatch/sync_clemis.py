@@ -21,7 +21,19 @@ if config.use_cad_ws:
     incident_sync = []
     for i in incident_list_full:
         i = clemis.incidentdict_ws(i, unit_list_full)
-        # TODO - Add code with boolean from config.py that adds incident_temp_url & location key/value pairs to dict
+        # If ws_plus_email is True, this code block will populate the incident_temp_url & location fields
+        if config.ws_plus_email:
+            try:
+                incident_list_file = open(config.watch_dir + '/clemis/email_incident_list/incident_list.p', 'rb')
+                incident_list = pickle.load(incident_list_file)
+                for d in incident_list:
+                    if d['incident_number'] == i['incident_number']:
+                        if d['agency_code'] == i['agency_code']:
+                            i['incident_temp_url'] = d['incident_temp_url']
+                            i['location'] = d['location']
+            except FileNotFoundError:
+                pass
+            pass
         incident_sync.append(i)
         pass
 

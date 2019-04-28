@@ -9,6 +9,9 @@ cad_url_clemis = 'https://apps.clemis.org/CDEWebService/CDEService.asmx'
 # Use CAD web service
 use_cad_ws = False
 
+# Use web service with email support for additional fields
+ws_plus_email = False
+
 # CAD credentials
 cad_user_clemis = 'example_caduser'
 cad_pass_clemis = 'example_cadpass'
