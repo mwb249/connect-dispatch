@@ -204,118 +204,113 @@ def inc_cat_find(inc_type_desc):
     return category
 
 
-# TODO - Boolean (push=True), move all non-sync key/values there
-def incidentlist_ws(inc_dict, unit_list, push=False):
+def incidentlist_ws(i_dict, unit_list, push=False):
     """
     This function takes a 'raw' incident dictionary and unit list XML tree from the CLEMIS web service, and returns a
     modified version of the incident dictionary. The 'push' boolean parameter specifies whether the list will be used
     in a 'push' capacity (certain key/value pairs are only pushed to the GIS during the initial append).
     """
     # Correct incident_type_code and incident_type_desc
-    inc_dict['incident_type_desc'] = inc_dict.pop('incident_type_description')
-    incident_type_code = inc_dict['incident_type_code']
-    incident_type_desc = inc_dict['incident_type_desc']
-    inc_dict['incident_type_code'] = inc_code_correct(incident_type_code, incident_type_desc)
-    inc_dict['incident_type_desc'] = inc_desc_correct(incident_type_desc)
+    i_dict['incident_type_desc'] = i_dict.pop('incident_type_description')
+    incident_type_code = i_dict['incident_type_code']
+    incident_type_desc = i_dict['incident_type_desc']
+    i_dict['incident_type_code'] = inc_code_correct(incident_type_code, incident_type_desc)
+    i_dict['incident_type_desc'] = inc_desc_correct(incident_type_desc)
 
     # Update keys
-    inc_dict['address'] = inc_dict.pop('incident_address')
-    inc_dict['apt_number'] = inc_dict.pop('apartment_number')
-    inc_dict['city_desc'] = inc_dict.pop('incident_city_name')
-    inc_dict['state'] = inc_dict.pop('incident_state_code')
-    inc_dict['low_street'] = inc_dict.pop('low_xstreet')
-    inc_dict['high_street'] = inc_dict.pop('high_xstreet')
-    inc_dict['datetime_call'] = inc_dict.pop('call_date')
-    inc_dict['datetime_clear'] = inc_dict.pop('clear_date')
+    i_dict['address'] = i_dict.pop('incident_address')
+    i_dict['apt_number'] = i_dict.pop('apartment_number')
+    i_dict['city_desc'] = i_dict.pop('incident_city_name')
+    i_dict['state'] = i_dict.pop('incident_state_code')
+    i_dict['low_street'] = i_dict.pop('low_xstreet')
+    i_dict['high_street'] = i_dict.pop('high_xstreet')
+    i_dict['datetime_call'] = i_dict.pop('call_date')
+    i_dict['datetime_clear'] = i_dict.pop('clear_date')
 
     # Remove unnecessary key/value pairs
-    inc_dict.pop('incident_city_code')
-    inc_dict.pop('caller_name')
-    inc_dict.pop('caller_phone_number')
-    inc_dict.pop('operator_name')
-    inc_dict.pop('mapindex')
-    inc_dict.pop('Incident')
-    inc_dict.pop('Units')
-    inc_dict.pop('Unit')
-    inc_dict.pop('unit_area_code')
-    inc_dict.pop('unit_code')
-    inc_dict.pop('unit_dispatch_date')
-    inc_dict.pop('unit_enroute_date')
-    inc_dict.pop('unit_enroute_hospital_date')
-    inc_dict.pop('unit_arrive_date')
-    inc_dict.pop('unit_arrive_hospital_date')
-    inc_dict.pop('unit_clear_date')
-    inc_dict.pop('Comments')
-    inc_dict.pop('Comment')
+    i_dict.pop('incident_city_code')
+    i_dict.pop('caller_name')
+    i_dict.pop('caller_phone_number')
+    i_dict.pop('operator_name')
+    i_dict.pop('mapindex')
+    i_dict.pop('Incident')
+    i_dict.pop('Units')
+    i_dict.pop('Unit')
+    i_dict.pop('unit_area_code')
+    i_dict.pop('unit_code')
+    i_dict.pop('unit_dispatch_date')
+    i_dict.pop('unit_enroute_date')
+    i_dict.pop('unit_enroute_hospital_date')
+    i_dict.pop('unit_arrive_date')
+    i_dict.pop('unit_arrive_hospital_date')
+    i_dict.pop('unit_clear_date')
+    i_dict.pop('Comments')
+    i_dict.pop('Comment')
 
     # Add key/value pairs that are only available through the email push
-    inc_dict['incident_temp_url'] = None
-    inc_dict['location'] = None
+    i_dict['incident_temp_url'] = None
+    i_dict['location'] = None
 
     # Incident category
-    inc_dict['incident_category'] = inc_cat_find(inc_dict['incident_type_desc'])
+    i_dict['incident_category'] = inc_cat_find(i_dict['incident_type_desc'])
 
     # Call datetime
-    inc_dict['datetime_call'] = timeutils.incident_dt_ws(inc_dict['datetime_call'])
+    i_dict['datetime_call'] = timeutils.incident_dt_ws(i_dict['datetime_call'])
 
     # Dispatch datetime
-    inc_dict['datetime_dispatched'] = timeutils.unit_dt_from_dict(unit_list, inc_dict, 'unit_dispatch_date')
+    i_dict['datetime_dispatched'] = timeutils.unit_dt_from_dict(unit_list, i_dict, 'unit_dispatch_date')
 
     # En Route datetime
-    inc_dict['datetime_enroute'] = timeutils.unit_dt_from_dict(unit_list, inc_dict, 'unit_enroute_date')
+    i_dict['datetime_enroute'] = timeutils.unit_dt_from_dict(unit_list, i_dict, 'unit_enroute_date')
 
     # Arrival datetime
-    inc_dict['datetime_arrival'] = timeutils.unit_dt_from_dict(unit_list, inc_dict, 'unit_arrive_date')
+    i_dict['datetime_arrival'] = timeutils.unit_dt_from_dict(unit_list, i_dict, 'unit_arrive_date')
 
     # Clear datetime
-    inc_dict['datetime_clear'] = timeutils.incident_dt_ws(inc_dict['datetime_clear'])
-
-    # Created datetime
-    inc_dict['datetime_created'] = datetime.now(pytz.utc)
+    i_dict['datetime_clear'] = timeutils.incident_dt_ws(i_dict['datetime_clear'])
 
     # Chief Complaint
-    match = re.search(r'CC: (.*)', inc_dict['comments_text'])
+    match = re.search(r'CC: (.*)', i_dict['comments_text'])
     chief_complaint = str(match.group(1) if match else None)
-    inc_dict['chief_complaint'] = str(chief_complaint.strip()).title()
+    i_dict['chief_complaint'] = str(chief_complaint.strip()).title()
 
     # ProQA Code
-    match = re.search(r'DISPATCH CODE: (.*?)\(', inc_dict['comments_text'])
+    match = re.search(r'DISPATCH CODE: (.*?)\(', i_dict['comments_text'])
     proqa_code = str(match.group(1) if match else None)
-    inc_dict['proqa_code'] = proqa_code.strip()
+    i_dict['proqa_code'] = proqa_code.strip()
 
     # Proqa Suffix Code
-    match = re.search(r'SUFFIX: (.*?)\(', inc_dict['comments_text'])
+    match = re.search(r'SUFFIX: (.*?)\(', i_dict['comments_text'])
     proqa_suffix_code = str(match.group(1) if match else None)
-    inc_dict['proqa_suffix_code'] = proqa_suffix_code.strip()
+    i_dict['proqa_suffix_code'] = proqa_suffix_code.strip()
 
     # ProQA Description
-    match = re.search(r'DISPATCH CODE:.*?\((.*)\)', inc_dict['comments_text'])
+    match = re.search(r'DISPATCH CODE:.*?\((.*)\)', i_dict['comments_text'])
     proqa_desc = str(match.group(1) if match else None)
-    inc_dict['proqa_desc'] = str(proqa_desc.strip()).title()
+    i_dict['proqa_desc'] = str(proqa_desc.strip()).title()
 
     # ProQA Suffix description
-    match = re.search(r'SUFFIX:.*?\((.*)\)', inc_dict['comments_text'])
+    match = re.search(r'SUFFIX:.*?\((.*)\)', i_dict['comments_text'])
     proqa_suffix_desc = str(match.group(1) if match else None)
-    inc_dict['proqa_suffix_desc'] = str(proqa_suffix_desc.strip()).title()
+    i_dict['proqa_suffix_desc'] = str(proqa_suffix_desc.strip()).title()
 
     # Remove 'comments_text' key/value
-    inc_dict.pop('comments_text')
-
-    # Add source CAD system
-    inc_dict['source_cad'] = 'clemis'
+    i_dict.pop('comments_text')
 
     # Push only key/values
     if push:
-        pass
-    return inc_dict
+        # Source CAD system
+        i_dict['source_cad'] = 'clemis'
+        # Created datetime
+        i_dict['datetime_created'] = datetime.now(pytz.utc)
+    return i_dict
 
 
-# TODO - Boolean (push=True), move all non-sync key/values there
-def incidentlist_email(inc_details, unit_details, comments, inc_url, push=False):
+def incidentdict_email(inc_details, unit_details, comments, inc_url, push=False):
     """
-    This function takes the three sections of a CLEMIS D-Card along with the incident URL, and returns a list of
-    incident dictionaries. The 'push' boolean parameter specifies whether the list will be used in a 'push'
-    capacity (certain key/value pairs are only pushed to the GIS during the initial append).
+    This function takes the three sections of a CLEMIS D-Card along with the incident URL, and returns an incident
+    dictionary. The 'push' boolean parameter specifies whether the list will be used in a 'push' capacity (certain
+    key/value pairs are only pushed to the GIS during the initial append).
     """
     # Incident Number
     incident_number = inc_details[1][1]
@@ -372,9 +367,6 @@ def incidentlist_email(inc_details, unit_details, comments, inc_url, push=False)
     datetime_enroute = timeutils.incident_dt_email(inc_details[8][1])
     datetime_arrival = timeutils.incident_dt_email(inc_details[9][1])
     datetime_clear = timeutils.incident_dt_email(inc_details[10][1])
-
-    # Datetime created
-    datetime_created = datetime.now(pytz.utc)
 
     # Units Assigned
     units_assigned = []
@@ -434,12 +426,7 @@ def incidentlist_email(inc_details, unit_details, comments, inc_url, push=False)
     # Incident Category
     incident_category = inc_cat_find(incident_type_desc)
 
-    # Push only key/values
-    if push:
-        pass
-
-    # Construct a list of incident dictionaries
-    i_list = []
+    # Construct an incident dictionary
     i_dict = {
         'incident_number': incident_number,
         'incident_type_code': incident_type_code,
@@ -459,14 +446,18 @@ def incidentlist_email(inc_details, unit_details, comments, inc_url, push=False)
         'datetime_enroute': datetime_enroute,
         'datetime_arrival': datetime_arrival,
         'datetime_clear': datetime_clear,
-        'datetime_created': datetime_created,
         'units_assigned': units_assigned,
         'chief_complaint': chief_complaint,
         'proqa_code': proqa_code,
         'proqa_suffix_code': proqa_suffix_code,
         'proqa_desc': proqa_desc,
-        'proqa_suffix_desc': proqa_suffix_desc,
-        'source_cad': 'clemis'
+        'proqa_suffix_desc': proqa_suffix_desc
     }
-    i_list.append(i_dict)
-    return i_list
+    # Push only additional key/values
+    if push:
+        # Created datetime
+        i_dict['datetime_created'] = datetime.now(pytz.utc)
+        # Source CAD system
+        i_dict['source_cad'] = 'clemis'
+        pass
+    return i_dict

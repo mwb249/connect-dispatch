@@ -1,4 +1,3 @@
-#!/home/administrator/anaconda3/bin/python3
 
 """Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
 The webservice_clemis script polls the CLEMIS CAD web service. When any update occurs, new data is written to files.
@@ -55,7 +54,7 @@ if incident_list_new:
     for i in incident_list_full:
         for new in incident_list_new:
             if i['incident_number'] == new['incident_number']:
-                i = clemis.incidentlist_ws(i, unit_list_full)
+                i = clemis.incidentlist_ws(i, unit_list_full, push=True)
                 incident_push.append(i)
                 pass
             pass
