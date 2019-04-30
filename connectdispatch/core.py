@@ -1,7 +1,11 @@
+from arcgis.gis import GIS
+
+
 class Agency(object):
     registry = []
 
-    def __init__(self, agency_code, county_code, state_code, ago_portal, ago_user, ago_pass):
+    def __init__(self, agency_code, county_code, state_code, ago_portal, ago_user, ago_pass, flc_fireincidents,
+                 flc_responsedistricts, flc_serviceareas, flc_boxalarmareas):
         self.registry.append(self)
         self.agency_code = agency_code
         self.county_code = county_code
@@ -9,9 +13,14 @@ class Agency(object):
         self.ago_portal = ago_portal
         self.ago_user = ago_user
         self.ago_pass = ago_pass
+        self.flc_fireincidents = flc_fireincidents
+        self.flc_responsedistricts = flc_responsedistricts
+        self.flc_serviceareas = flc_serviceareas
+        self.flc_boxalarmareas = flc_boxalarmareas
 
-    def ago_login(self):
-        pass
+    def webgis(self):
+        gis = GIS(self.ago_portal, self.ago_user, self.ago_pass)
+        return gis
 
 
 class Incident(object):
