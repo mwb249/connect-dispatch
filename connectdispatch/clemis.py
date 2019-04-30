@@ -9,7 +9,7 @@ import requests
 import re
 import config
 import xmlutils
-from clemis import timeutils
+import timeutils
 from xml.etree import ElementTree
 
 
@@ -228,24 +228,24 @@ def incidentdict_ws(i_dict, unit_list, push=False):
     i_dict['datetime_clear'] = i_dict.pop('clear_date')
 
     # Remove unnecessary key/value pairs
-    i_dict.pop('incident_city_code')
-    i_dict.pop('caller_name')
-    i_dict.pop('caller_phone_number')
-    i_dict.pop('operator_name')
-    i_dict.pop('mapindex')
-    i_dict.pop('Incident')
-    i_dict.pop('Units')
-    i_dict.pop('Unit')
-    i_dict.pop('unit_area_code')
-    i_dict.pop('unit_code')
-    i_dict.pop('unit_dispatch_date')
-    i_dict.pop('unit_enroute_date')
-    i_dict.pop('unit_enroute_hospital_date')
-    i_dict.pop('unit_arrive_date')
-    i_dict.pop('unit_arrive_hospital_date')
-    i_dict.pop('unit_clear_date')
-    i_dict.pop('Comments')
-    i_dict.pop('Comment')
+    del i_dict['incident_city_code']
+    del i_dict['caller_name']
+    del i_dict['caller_phone_number']
+    del i_dict['operator_name']
+    del i_dict['mapindex']
+    del i_dict['Incident']
+    del i_dict['Units']
+    del i_dict['Unit']
+    del i_dict['unit_area_code']
+    del i_dict['unit_code']
+    del i_dict['unit_dispatch_date']
+    del i_dict['unit_enroute_date']
+    del i_dict['unit_enroute_hospital_date']
+    del i_dict['unit_arrive_date']
+    del i_dict['unit_arrive_hospital_date']
+    del i_dict['unit_clear_date']
+    del i_dict['Comments']
+    del i_dict['Comment']
 
     # Add key/value pairs that are only available through the email push
     i_dict['incident_temp_url'] = None
@@ -295,7 +295,7 @@ def incidentdict_ws(i_dict, unit_list, push=False):
     i_dict['proqa_suffix_desc'] = str(proqa_suffix_desc.strip()).title()
 
     # Remove 'comments_text' key/value
-    i_dict.pop('comments_text')
+    del i_dict['comments_text']
 
     # Push only key/values
     if push:

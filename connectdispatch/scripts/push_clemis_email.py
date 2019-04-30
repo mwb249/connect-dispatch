@@ -1,16 +1,21 @@
+"""
+Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
 
+The push_clemis_email script ...
+"""
+
+from connectdispatch import config, clemis
+import logging
+import os
 import sys
 import re
 import requests
 from bs4 import BeautifulSoup
 import email
 import pickle
-import logging
-import config
-from clemis import clemis
 
 # Logging
-logging.basicConfig(filename='clemis.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 # Assign variable to email message and subject
 msg = email.message_from_file(sys.stdin)

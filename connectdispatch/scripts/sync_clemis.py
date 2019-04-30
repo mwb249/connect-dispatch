@@ -1,13 +1,20 @@
+"""
+Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
 
-import pickle
+The sync_clemis script ...
+"""
+
+from connectdispatch import config, xmlutils, clemis
 import logging
+import os
+import pickle
 from datetime import datetime, timedelta
 import pytz
 from bs4 import BeautifulSoup
 import requests
-import config
-import xmlutils
-from clemis import clemis
+
+# Logging
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 if config.use_cad_ws:
     # Get XML object containing the CLEMIS CAD incident data for the last 6 hours

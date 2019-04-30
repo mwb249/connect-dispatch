@@ -1,25 +1,17 @@
+"""
+Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
 
-"""Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
-The webservice_clemis script polls the CLEMIS CAD web service. When any update occurs, new data is written to files.
-From there it is detected and managed by other scripts."""
+The push_clemis_ws script polls the CLEMIS CAD web service. When any update occurs, new data is written to files.
+From there it is detected and managed the gis_append script.
+"""
 
-__author__ = 'Doreen Groth and Mark Brown'
-__email__ = 'support@connect-geo.com'
-__copyright__ = 'Copyright (c) 2019, Connect Geospatial Solutions, LLC - All Rights Reserved'
-__license__ = '''You may use, distribute, and modify this code under the terms of the Connect|DISPATCH On-Premises 
-Deployment license. You should have received a copy of the Connect|DISPATCH On-Premises Deployment license with this 
-file. If not, please email: support@connect-geo.com'''
-__version__ = '1.1.0'
-__status__ = 'Production'
-
+from connectdispatch import config, xmlutils, clemis
 import logging
+import os
 import pickle
-import config
-import xmlutils
-from clemis import clemis
 
 # Logging
-logging.basicConfig(filename='clemis.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 # Get XML object containing the CLEMIS CAD incident data for the last 6 hours
 incident_tree = clemis.getxml(6)
