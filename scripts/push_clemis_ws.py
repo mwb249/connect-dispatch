@@ -5,30 +5,42 @@ The push_clemis_ws script polls the CLEMIS CAD web service. When any update occu
 From there it is detected and managed the gis_append script.
 """
 
-from connectdispatch import config, xmlutils, clemis
+from connectdispatch import xmlutils, clemis
 import logging
 import os
 import pickle
+import yaml
 
 # Logging
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
+# Directories
+cwd = os.getcwd()
+watch_dir = cwd + '/watch'
+config_dir = cwd + '/config'
+
+# Open config file, construct clemis object
+with open(config_dir + '/config.yaml', 'r') as yamlfile:
+    cfg = yaml.load(yamlfile)
+clemis_cfg = cfg['clemis']
+
 # Get XML object containing the CLEMIS CAD incident data for the last 6 hours
-incident_tree = clemis.getxml(6)
+incident_tree = clemis.getxml(clemis_cfg['ws_hrs'], clemis_cfg['ws_url'], clemis_cfg['cad_user'],
+                              clemis_cfg['cad_pass'])
 
 # Get incident list (agency_code & incident_number)
 incident_list = clemis.incidentlist(incident_tree)
 
 # Open previous incident list
 try:
-    incident_list_check = open(config.watch_dir + '/clemis/ws_incident_list/incident_list.p', 'rb')
+    incident_list_check = open(watch_dir + '/clemis/ws_incident_list/incident_list.p', 'rb')
     incident_list_check = pickle.load(incident_list_check)
 except FileNotFoundError:
-    incident_list_check = open(config.watch_dir + '/clemis/ws_incident_list/incident_list.p', 'w+b')
+    incident_list_check = open(watch_dir + '/clemis/ws_incident_list/incident_list.p', 'w+b')
 
 # If incident list does not equal previous incident list, write the new version to file
 if incident_list_check != incident_list:
-    file_incident_list = open(config.watch_dir + '/clemis/ws_incident_list/incident_list.p', 'wb')
+    file_incident_list = open(watch_dir + '/clemis/ws_incident_list/incident_list.p', 'wb')
     pickle.dump(incident_list, file_incident_list)
     file_incident_list.close()
     pass
@@ -52,7 +64,7 @@ if incident_list_new:
             pass
         pass
     # Write new incident(s) to incident_push file
-    file_incident_push = open(config.watch_dir + '/incident_push/incident_push.p', 'wb')
+    file_incident_push = open(watch_dir + '/incident_push/incident_push.p', 'wb')
     pickle.dump(incident_push, file_incident_push)
     file_incident_push.close()
     # Log update

@@ -7,13 +7,12 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 import re
-import config
 import xmlutils
 import timeutils
 from xml.etree import ElementTree
 
 
-def getxml(hrs):
+def getxml(hrs, cad_url, cad_user, cad_pass):
     """
     Makes a SOAP request to CLEMIS CAD web service and returns an XML object containing the CAD incident data for the
     past number of hours specified in the parameters.
@@ -43,10 +42,10 @@ def getxml(hrs):
         </getIncidentDataByLastUpdatedDate>
       </soap12:Body>
     </soap12:Envelope>'''
-    body = body1 + config.cad_user_clemis + body2 + config.cad_pass_clemis + body3 + last_update_datetime + body4
+    body = body1 + cad_user + body2 + cad_pass + body3 + last_update_datetime + body4
 
     # Request
-    r = requests.post(config.cad_url_clemis, data=body, headers=headers, timeout=2)
+    r = requests.post(cad_url, data=body, headers=headers, timeout=2)
 
     # Parse XML return with ElementTree
     full_xml = ElementTree.fromstring(r.content)
@@ -353,14 +352,6 @@ def incidentdict_email(inc_details, unit_details, comments, inc_url, push=False)
         city_desc = str(match.group(1) if match else None)
         pass
 
-    # State
-    state = ''
-    for agency_dict in config.agency_list:
-        if agency_dict['agency_code'] == agency_code:
-            state = agency_dict['state_code']
-        else:
-            state = None
-
     # Incident Times
     datetime_call = timeutils.incident_dt_email(inc_details[6][1])
     datetime_dispatched = timeutils.incident_dt_email(inc_details[7][1])
@@ -438,7 +429,7 @@ def incidentdict_email(inc_details, unit_details, comments, inc_url, push=False)
         'location': location,
         'apt_number': apt_number,
         'city_desc': city_desc,
-        'state': state,
+        'state': 'MI',
         'low_street': None,
         'high_street': None,
         'datetime_call': datetime_call,

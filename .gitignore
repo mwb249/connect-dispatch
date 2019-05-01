@@ -104,9 +104,13 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# config files
+# Config files
 config.py
+config.yaml
 agency_codes.csv
 
 # Pickle files
 *.p
+
+# Temp py files
+*temp.py

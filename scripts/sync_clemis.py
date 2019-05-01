@@ -4,9 +4,10 @@ Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
 The sync_clemis script ...
 """
 
-from connectdispatch import config, xmlutils, clemis
+from connectdispatch import xmlutils, clemis
 import logging
 import os
+import yaml
 import pickle
 from datetime import datetime, timedelta
 import pytz
@@ -16,9 +17,20 @@ import requests
 # Logging
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
-if config.use_cad_ws:
+# Directories
+cwd = os.getcwd()
+watch_dir = cwd + '/watch'
+config_dir = cwd + '/config'
+
+# Open config file, construct clemis object
+with open(config_dir + '/config.yaml', 'r') as yamlfile:
+    cfg = yaml.load(yamlfile)
+clemis_cfg = cfg['clemis']
+
+if clemis_cfg['use_ws']:
     # Get XML object containing the CLEMIS CAD incident data for the last 6 hours
-    incident_tree = clemis.getxml(6)
+    incident_tree = clemis_cfg.getxml(clemis_cfg['ws_hrs'], clemis_cfg['ws_url'], clemis_cfg['cad_user'],
+                                      clemis_cfg['cad_pass'])
 
     # Get lists of dictionaries for incidents and comments based on returned XML
     incident_list_full = xmlutils.xmltolist(incident_tree, 'Incident')
@@ -29,9 +41,9 @@ if config.use_cad_ws:
     for i in incident_list_full:
         i = clemis.incidentdict_ws(i, unit_list_full)
         # If ws_plus_email is True, this code block will populate the incident_temp_url & location fields
-        if config.ws_plus_email:
+        if clemis_cfg['ws_plus_email']:
             try:
-                incident_list_file = open(config.watch_dir + '/clemis/email_incident_list/incident_list.p', 'rb')
+                incident_list_file = open(watch_dir + '/clemis/email_incident_list/incident_list.p', 'rb')
                 incident_list = pickle.load(incident_list_file)
                 for d in incident_list:
                     if d['incident_number'] == i['incident_number']:
@@ -45,14 +57,14 @@ if config.use_cad_ws:
         pass
 
     try:
-        incident_sync_check = open(config.watch_dir + '/incident_sync/incident_sync.p', 'rb')
+        incident_sync_check = open(watch_dir + '/incident_sync/incident_sync.p', 'rb')
         incident_sync_check = pickle.load(incident_sync_check)
     except FileNotFoundError:
-        incident_sync_check = open(config.watch_dir + '/incident_sync/incident_sync.p', 'w+b')
+        incident_sync_check = open(watch_dir + '/incident_sync/incident_sync.p', 'w+b')
 
     # If the incident_list_full does not equal the previous incident_list_full, write the new version to file
     if incident_sync_check != incident_sync:
-        file_incident_sync = open(config.watch_dir + '/incident_sync/incident_sync.p', 'wb')
+        file_incident_sync = open(watch_dir + '/incident_sync/incident_sync.p', 'wb')
         pickle.dump(incident_sync, file_incident_sync)
         file_incident_sync.close()
         # Log update
@@ -62,7 +74,7 @@ if config.use_cad_ws:
 else:
     # Open email incident list file
     try:
-        file_incident_list = open(config.watch_dir + '/clemis/email_incident_list/incident_list.p', 'rb')
+        file_incident_list = open(watch_dir + '/clemis/email_incident_list/incident_list.p', 'rb')
         incident_list = pickle.load(file_incident_list)
     except FileNotFoundError:
         incident_list = []
@@ -95,12 +107,12 @@ else:
                 pass
             pass
         # Write new incident(s) to incident_sync file
-        file_incident_sync = open(config.watch_dir + '/incident_sync/incident_sync.p', 'wb')
+        file_incident_sync = open(watch_dir + '/incident_sync/incident_sync.p', 'wb')
         pickle.dump(incident_sync, file_incident_sync)
         file_incident_sync.close()
 
         # Write incident list to incident_list file
-        file_incident_list = open(config.watch_dir + '/clemis/email_incident_list/incident_list.p', 'wb')
+        file_incident_list = open(watch_dir + '/clemis/email_incident_list/incident_list.p', 'wb')
         pickle.dump(incident_list, file_incident_list)
         file_incident_list.close()
     pass
