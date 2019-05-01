@@ -37,9 +37,6 @@ mi_south = Proj(init='epsg:3593', preserve_units=True)  # NAD 1983 StatePlane Mi
 web_mercator = Proj(init='epsg:3857')  # WGS 1984 Web Mercator Auxiliary Sphere
 wgs84 = Proj(init='epsg:4326')  # WGS84
 
-# Geocoders
-oc_geocoder = 'https://gisservices.oakgov.com/arcgis/rest/services/OCUtilities/CountyLocations/GeocodeServer'
-
 for i in incident_push:
     for agency in cfg['agencies'].keys():
         if i['agency_code'] == cfg['agencies'][agency]['agency_code']:
@@ -82,9 +79,9 @@ for i in incident_push:
             sa_ymin = f_servicearea.attributes['ymin_fips2113_ftintl']
             search_area = {'xmax': sa_xmax, 'xmin': sa_xmin, 'ymax': sa_ymax, 'ymin': sa_ymin}
 
-            # Use the Oakland County geocoder, default is Esri World geocoder
+            # Use the Oakland County geocoder, default is the Esri World geocoder
             if cfg['agencies'][agency]['use_oc_geocoder']:
-                geocoder = Geocoder(oc_geocoder)
+                geocoder = Geocoder(cfg['geocoders']['oc_geocoder'])
             else:
                 geocoder = None
 
