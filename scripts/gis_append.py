@@ -5,11 +5,11 @@ import os
 import yaml
 import pickle
 import csv
+import mgrs
 from arcgis.gis import GIS
 from arcgis.geocoding import Geocoder, geocode
 from arcgis.geometry import filters, Point
 from pyproj import Proj, transform
-import mgrs
 from copy import deepcopy
 
 # Logging
