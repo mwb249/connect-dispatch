@@ -1,4 +1,4 @@
-from arcgis.gis import GIS
+"""To be completed..."""
 
 
 class Agency(object):
@@ -17,10 +17,6 @@ class Agency(object):
         self.flc_responsedistricts = flc_responsedistricts
         self.flc_serviceareas = flc_serviceareas
         self.flc_boxalarmareas = flc_boxalarmareas
-
-    def webgis(self):
-        gis = GIS(self.ago_portal, self.ago_user, self.ago_pass)
-        return gis
 
 
 class Incident(object):

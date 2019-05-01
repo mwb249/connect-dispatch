@@ -3,19 +3,15 @@ from connectdispatch import config
 import logging
 import os
 import pickle
+from arcgis.gis import GIS
 from arcgis.geocoding import geocode
 from arcgis.geometry import filters, Point
-from pyproj import Proj, transform
+from pyproj import transform
 import mgrs
 from copy import deepcopy
 
 # Logging
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
-
-# Define projections
-mi_south = Proj(init='epsg:3593', preserve_units=True)  # NAD 1983 StatePlane Michigan South, FIPS 2113 IntlFeet
-web_mercator = Proj(init='epsg:3857')  # WGS 1984 Web Mercator Auxiliary Sphere
-wgs84 = Proj(init='epsg:4326')  # WGS84
 
 # Open incident_push file
 file_incident_push = open('/incident_push/incident_push.p', 'rb')
@@ -25,7 +21,7 @@ for i in incident_push:
     for agency in Agency.registry:
         if i['agency_code'] == agency.agency_code:
             # Construct Web GIS object
-            gis = agency.webgis()
+            gis = GIS(agency.ago_portal, agency.ago_user, agency.ago_pass)
 
             # Construct feature layer objects
             flc_fireincidents = gis.content.get(agency.flc_fireincidents)
@@ -41,11 +37,12 @@ for i in incident_push:
             fl_boxalarmareas = flc_boxalarmareas.layers[0]
 
             # If incident is mutual-aid, find agency_code
+            mutaid_agency_code = ''
             if i['inc_type_code'] == 'MUTAID':
-                fset_mutaid_table = fl_mutaid_table.query(where="city_desc LIKE '" + i['inc_city_desc'] + "'")
-                f_mutaid = fset_mutaid_table.features[0]
-                mutaid_agency_code = f_mutaid.attributes['agency_code']
-                pass
+                if i['city_desc'] == config.agency_codes['city_desc']:
+                    mutaid_agency_code = config.agency_codes['agency_code']
+                else:
+                    mutaid_agency_code = i['agency_code']
 
             # Query feature layer and create search extent dictionary
             if i['inc_type_code'] == 'MUTAID':
@@ -63,16 +60,16 @@ for i in incident_push:
             geocode_result = geocode(i['address'], search_extent=search_area, geocoder=config.oc_geocoder)
             if not geocode_result:
                 # Create agency specific default location
-                geocode_result = geocode('6500 Citation Dr', geocoder=config.oc_geocoder)
+                geocode_result = geocode(config.default_geocode, geocoder=config.oc_geocoder)
                 geocode_success = 'N'
             else:
                 geocode_success = 'Y'
                 pass
 
             # Transform coordinates
-            x, y = transform(mi_south, web_mercator, geocode_result[0]['location']['x'],
+            x, y = transform(config.mi_south, config.web_mercator, geocode_result[0]['location']['x'],
                              geocode_result[0]['location']['y'])
-            long, lat = transform(mi_south, wgs84, geocode_result[0]['location']['x'],
+            long, lat = transform(config.mi_south, config.wgs84, geocode_result[0]['location']['x'],
                                   geocode_result[0]['location']['y'])
 
             # Round Lat/Long
@@ -106,9 +103,6 @@ for i in incident_push:
             # Create new feature based on template
             fset_fireincidents = fl_fireincidents.query()
             f = deepcopy(fset_fireincidents.features[0])
-
-            # Create empty list for new GIS features
-            feature_list = []
 
             # Assign geometry & attributes to new feature
             f.geometry = geocode_xy
@@ -146,8 +140,8 @@ for i in incident_push:
             f.attributes['boxalarm_medical'] = boxalarm_medical
             f.attributes['boxalarm_wildland'] = boxalarm_wildland
 
-            # Append feature to list
-            feature_list.append(f)
+            # Create empty list for new GIS features
+            feature_list = [f]
 
             # Add features to feature layer
-        fl_fireincidents.edit_features(adds=feature_list)
+            fl_fireincidents.edit_features(adds=feature_list)
