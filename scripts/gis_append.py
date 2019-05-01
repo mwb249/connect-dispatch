@@ -25,11 +25,11 @@ with open(config_dir + '/config.yaml', 'r') as yamlfile:
     cfg = yaml.load(yamlfile)
 
 # Open incident_push file
-file_incident_push = open('/incident_push/incident_push.p', 'rb')
+file_incident_push = open(watch_dir + '/incident_push/incident_push.p', 'rb')
 incident_push = pickle.load(file_incident_push)
 
 # Agency codes dictionary
-file_agency_codes = csv.DictReader(open(cwd + '/config/agency_codes.csv'))
+file_agency_codes = csv.DictReader(open(config_dir + '/agency_codes.csv'))
 agency_codes = {rows['agency_code']: rows['city_desc'] for rows in file_agency_codes}
 
 # Define projections
@@ -129,6 +129,10 @@ for i in incident_push:
                     boxalarm_medical = boxalarmarea.attributes['BoxAlarmNumber']
                 elif boxalarmarea.attributes['BoxAlarmType'] == 'WILDLAND':
                     boxalarm_wildland = boxalarmarea.attributes['BoxAlarmNumber']
+
+            # TODO: Determine agency_district
+            agency_district = None
+
             # Create new feature based on template
             fset_fireincidents = fl_fireincidents.query()
             f = deepcopy(fset_fireincidents.features[0])
@@ -138,11 +142,11 @@ for i in incident_push:
             f.attributes['incident_number'] = i['incident_number']
             f.attributes['incident_type_code'] = i['incident_type_code']
             f.attributes['incident_type_desc'] = i['incident_type_desc']
-            f.attributes['incident_temp_url'] = None
+            f.attributes['incident_temp_url'] = i['incident_temp_url']
             f.attributes['agency_code'] = i['agency_code']
-            f.attributes['agency_district'] = None
+            f.attributes['agency_district'] = agency_district
             f.attributes['address'] = i['address']
-            f.attributes['location'] = None
+            f.attributes['location'] = i['location']
             f.attributes['apt_number'] = i['apt_number']
             f.attributes['city_code'] = i['city_code']
             f.attributes['city_desc'] = i['city_desc']
