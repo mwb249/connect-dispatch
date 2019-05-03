@@ -20,7 +20,7 @@ watch_dir = cwd + '/watch'
 config_dir = cwd + '/config'
 
 # Open config file, construct clemis object
-with open(config_dir + '/config.yaml', 'r') as yamlfile:
+with open(config_dir + '/config.yml', 'r') as yamlfile:
     cfg = yaml.load(yamlfile)
 clemis_cfg = cfg['clemis']
 
