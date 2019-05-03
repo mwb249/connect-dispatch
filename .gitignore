@@ -106,7 +106,7 @@ venv.bak/
 
 # Config files
 config.py
-config.yaml
+config.yml
 agency_codes.csv
 
 # Pickle files
