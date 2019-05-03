@@ -79,7 +79,7 @@ for i in incident_push:
             sa_ymin = f_servicearea.attributes['ymin_fips2113_ftintl']
             search_area = {'xmax': sa_xmax, 'xmin': sa_xmin, 'ymax': sa_ymax, 'ymin': sa_ymin}
 
-            # Use the Oakland County geocoder, default is the Esri World geocoder
+            # Determine geocoder, default is the 'World Geocoder for ArcGIS'
             if cfg['agencies'][agency]['use_oc_geocoder']:
                 geocoder = Geocoder(cfg['geocoders']['oc_geocoder'])
             else:

@@ -1,6 +1,41 @@
 ---
-
-
-
-
+geocoders:
+clemis:
+  ws_url: https://example.com/webservice.asmx
+  cad_user: cad_user
+  cad_pass: cad_password
+  # Use CLEMIS CAD web service
+  use_ws: no
+  # Use CLEMIS CAD web service with email support for additional fields
+  ws_plus_email: no
+  ws_hrs: 6
+agencies:
+  example_fd1:
+    agency_code:
+    county_code:
+    state:
+    ago_portal:
+    ago_user:
+    ago_pass:
+    ago_profile:
+    flc_fireincidents:
+    flc_responsedistricts:
+    flc_serviceareas:
+    flc_boxalarmareas:
+    default_location:
+    use_oc_geocoder:
+  example_fd2:
+    agency_code:
+    county_code:
+    state:
+    ago_portal:
+    ago_user:
+    ago_pass:
+    ago_profile:
+    flc_fireincidents:
+    flc_responsedistricts:
+    flc_serviceareas:
+    flc_boxalarmareas:
+    default_location:
+    use_oc_geocoder:
 ...

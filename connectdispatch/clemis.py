@@ -169,15 +169,15 @@ def inc_cat_find(inc_type_desc):
     """
     fire = ['Residential Structure Fire', 'Commercial Structure Fire', 'Residential Fire (Full Response)',
             'Commercial Fire (Full Response)', 'Residential Fire (Box Alarm)', 'Commercial Fire (Box Alarm)',
-            'Vehicle Fire', 'Residential Fire (Still Response)']
+            'Vehicle Fire', 'Residential Fire (Still Response)', 'Commercial Fire (Still Response']
     fire_alarm = ['Commercial Fire Alarm', 'Residential Fire Alarm']
     fire_hazard = ['Burning Complaint', 'Gas Leak', 'Outdoor Fire/Other', 'Smoke Investigation', 'Odor Investigation']
     injury_accident = ['Injury Accident']
     medical = ['Alpha Medical', 'Bravo Medical', 'Charlie Medical', 'Delta Medical', 'Echo Medical', 'Omega Medical',
                'Medical Emergency', 'Medical Alarm']
     assist_citizen = ['Assist Citizen', 'Lift Assist']
-    haz_condition = ['Tree Down', 'CO Investigation', 'Wires Down', 'Fuel Spill', 'Technical Rescue',
-                     'Road Hazard Fire']
+    haz_condition = ['Tree Down', 'Down Tree', 'CO Investigation', 'Wires Down', 'Fuel Spill', 'Technical Rescue',
+                     'Trench Rescue', 'Road Hazard Fire']
     mutaid = ['Mutual-Aid']
     police_assist = ['Police Assist']
     if inc_type_desc in fire:
@@ -203,6 +203,7 @@ def inc_cat_find(inc_type_desc):
     return category
 
 
+# TODO: Add title case to keys
 def incidentdict_ws(i_dict, unit_list, push=False):
     """
     This function takes a 'raw' incident dictionary and unit list from the CLEMIS web service, and returns a modified
@@ -305,6 +306,7 @@ def incidentdict_ws(i_dict, unit_list, push=False):
     return i_dict
 
 
+# TODO: Add title case to keys
 def incidentdict_email(inc_details, unit_details, comments, inc_url, push=False):
     """
     This function takes the three sections of a CLEMIS D-Card along with the incident URL, and returns an incident
