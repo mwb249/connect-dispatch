@@ -42,13 +42,13 @@ wgs84 = Proj(init='epsg:4326')  # WGS84
 for i in incident_push:
     for agency in cfg['agencies'].keys():
         if i['agency_code'] == cfg['agencies'][agency]['agency_code']:
-            # Create/assign web GIS variable
+            # Assign variable to web GIS
             ago_portal = cfg['agencies'][agency]['ago_portal']
             ago_user = cfg['agencies'][agency]['ago_user']
             ago_pass = cfg['agencies'][agency]['ago_pass']
             gis = GIS(ago_portal, ago_user, ago_pass)
 
-            # Create/assign feature layer variables
+            # Assign variable to feature layers
             fl_fireincidents = gis.content.get(cfg['agencies'][agency]['flc_fireincidents']).layers[0]
             fl_serviceareas = gis.content.get(cfg['agencies'][agency]['flc_serviceareas']).layers[0]
             fl_firedistricts = gis.content.get(cfg['agencies'][agency]['flc_firedistricts']).layers[0]
@@ -84,7 +84,7 @@ for i in incident_push:
             # Geocode address
             geocode_result = geocode(i['address'], search_extent=search_area, geocoder=geocoder)
             if not geocode_result:
-                # Create agency specific default location
+                # If geocode fails use the agency default location
                 geocode_result = geocode(cfg['agencies'][agency]['default_location'], geocoder=geocoder)
                 geocode_success = 'N'
             else:
@@ -108,8 +108,7 @@ for i in incident_push:
             usng = u[0:3] + ' ' + u[3:5] + ' ' + u[5:10] + ' ' + u[10:15]
 
             # Construct point feature
-            xy_dict = {'x': x, 'y': y}
-            geocode_xy = Point(xy_dict)
+            geocode_xy = Point({'x': x, 'y': y})
 
             # Feature layer query to find box alarm areas
             fset_boxalarmareas = fl_boxalarmareas.query(geometry_filter=filters.intersects(geocode_xy))

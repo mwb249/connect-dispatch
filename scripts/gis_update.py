@@ -30,15 +30,14 @@ agency_codes = {rows['agency_code']: rows['city_desc'] for rows in file_agency_c
 for i in incident_sync:
     for agency in cfg['agencies'].keys():
         if i['agency_code'] == cfg['agencies'][agency]['agency_code']:
-            # Construct Web GIS objects
+            # Assign variable to web GIS
             ago_portal = cfg['agencies'][agency]['ago_portal']
             ago_user = cfg['agencies'][agency]['ago_user']
             ago_pass = cfg['agencies'][agency]['ago_pass']
             gis = GIS(ago_portal, ago_user, ago_pass)
 
-            # Construct feature layer objects
-            flc_fireincidents = gis.content.get(cfg['agencies'][agency]['flc_fireincidents'])
-            fl_fireincidents = flc_fireincidents.layers[0]
+            # Assign variable to feature layer
+            fl_fireincidents = gis.content.get(cfg['agencies'][agency]['flc_fireincidents']).layers[0]
 
             # Query feature layer to find any active incidents
             fset_fireincidents = fl_fireincidents.query(where='datetime_clear IS NULL')
