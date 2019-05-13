@@ -1,11 +1,13 @@
 """To be completed..."""
 
+from connectdispatch import fireops
 import logging
 import os
 import yaml
 import pickle
 import csv
 import mgrs
+from datetime import datetime
 from arcgis.gis import GIS
 from arcgis.geocoding import Geocoder, geocode
 from arcgis.geometry import filters, Point
@@ -20,15 +22,15 @@ cwd = os.getcwd()
 watch_dir = cwd + '/watch'
 config_dir = cwd + '/config'
 
-# Open config file, construct clemis object
+# Open config file
 with open(config_dir + '/config.yml', 'r') as yamlfile:
     cfg = yaml.load(yamlfile)
 
-# Open incident_push file
+# Open incident push file
 file_incident_push = open(watch_dir + '/incident_push/incident_push.p', 'rb')
 incident_push = pickle.load(file_incident_push)
 
-# Agency codes dictionary
+# Open agency codes table
 file_agency_codes = csv.DictReader(open(config_dir + '/agency_codes.csv'))
 agency_codes = {rows['agency_code']: rows['city_desc'] for rows in file_agency_codes}
 
@@ -40,24 +42,18 @@ wgs84 = Proj(init='epsg:4326')  # WGS84
 for i in incident_push:
     for agency in cfg['agencies'].keys():
         if i['agency_code'] == cfg['agencies'][agency]['agency_code']:
-            # Construct Web GIS objects
+            # Create/assign web GIS variable
             ago_portal = cfg['agencies'][agency]['ago_portal']
             ago_user = cfg['agencies'][agency]['ago_user']
             ago_pass = cfg['agencies'][agency]['ago_pass']
             gis = GIS(ago_portal, ago_user, ago_pass)
 
-            # Construct feature layer objects
-            flc_fireincidents = gis.content.get(cfg['agencies'][agency]['flc_fireincidents'])
-            fl_fireincidents = flc_fireincidents.layers[0]
-
-            flc_serviceareas = gis.content.get(cfg['agencies'][agency]['flc_serviceareas'])
-            fl_serviceareas = flc_serviceareas.layers[0]
-
-            flc_responsedistricts = gis.content.get(cfg['agencies'][agency]['flc_responsedistricts'])
-            fl_responsedisctricts = flc_responsedistricts.layers[0]
-
-            flc_boxalarmareas = gis.content.get(cfg['agencies'][agency]['flc_boxalarmareas'])
-            fl_boxalarmareas = flc_boxalarmareas.layers[0]
+            # Create/assign feature layer variables
+            fl_fireincidents = gis.content.get(cfg['agencies'][agency]['flc_fireincidents']).layers[0]
+            fl_serviceareas = gis.content.get(cfg['agencies'][agency]['flc_serviceareas']).layers[0]
+            fl_firedistricts = gis.content.get(cfg['agencies'][agency]['flc_firedistricts']).layers[0]
+            fl_boxalarmareas = gis.content.get(cfg['agencies'][agency]['flc_boxalarmareas']).layers[0]
+            fl_taxparcels = gis.content.get(cfg['agencies'][agency]['flc_taxparcels']).layers[0]
 
             # If incident is mutual-aid, find agency_code
             mutaid_agency_code = ''
@@ -112,7 +108,9 @@ for i in incident_push:
             usng = u[0:3] + ' ' + u[3:5] + ' ' + u[5:10] + ' ' + u[10:15]
 
             # Construct point feature
-            geocode_xy = Point(x=x, y=y)
+            xy_dict = {'x': x, 'y': y}
+            geocode_xy = Point(xy_dict)
+
             # Feature layer query to find box alarm areas
             fset_boxalarmareas = fl_boxalarmareas.query(geometry_filter=filters.intersects(geocode_xy))
 
@@ -130,11 +128,43 @@ for i in incident_push:
                 elif boxalarmarea.attributes['BoxAlarmType'] == 'WILDLAND':
                     boxalarm_wildland = boxalarmarea.attributes['BoxAlarmNumber']
 
-            # TODO: Determine agency_district
+            # Determine agency district
+            fset_firedistricts = fl_firedistricts.query(geometry_filter=filters.intersects(geocode_xy),
+                                                        return_geometry=False)
             agency_district = None
+            if fset_firedistricts:
+                agency_district = fset_firedistricts.features[0].attributes['primarystation']
+            else:
+                pass
+
+            # Determine shift on duty at time of call
+            pattern_start = datetime.strptime(cfg['agencies'][agency]['shift_start_date'], '%m-%d-%Y')
+            shift_start = cfg['agencies'][agency]['shift_start_time']
+            agency_shift = fireops.kellyshift(i['datetime_call'], pattern_start, shift_start)
+
+            # Query tax parcel layer to get structure data
+            fset_taxparcels = fl_taxparcels.query(where="SITEADDRESS LIKE  '" + i['address'] + "'",
+                                                  return_geometry=False, result_record_count=1)
+            parcel_id = None
+            map_index = None
+            structure_desc = None
+            structure_livingarea = None
+            structure_numbbeds = None
+            structure_assessvalue = None
+            structure_taxvalue = None
+            if fset_taxparcels and geocode_success == 'Y':
+                parcel_id = fset_taxparcels.features[0].attributes['PIN']
+                map_index = fset_taxparcels.features[0].attributes['PIN'][2:4]
+                structure_desc = fset_taxparcels.features[0].attributes['STRUCTURE_DESC']
+                structure_livingarea = fset_taxparcels.features[0].attributes['LIVING_AREA_SQFT']
+                structure_numbbeds = fset_taxparcels.features[0].attributes['NUM_BEDS']
+                structure_assessvalue = fset_taxparcels.features[0].attributes['ASSESSEDVALUE']
+                structure_taxvalue = fset_taxparcels.features[0].attributes['TAXABLEVALUE']
+            else:
+                pass
 
             # Create new feature based on template
-            fset_fireincidents = fl_fireincidents.query()
+            fset_fireincidents = fl_fireincidents.query(result_record_count=1)
             f = deepcopy(fset_fireincidents.features[0])
 
             # Assign geometry & attributes to new feature
@@ -145,13 +175,15 @@ for i in incident_push:
             f.attributes['incident_temp_url'] = i['incident_temp_url']
             f.attributes['agency_code'] = i['agency_code']
             f.attributes['agency_district'] = agency_district
+            f.attributes['agency_shift'] = agency_shift
+            f.attributes['parcel_id'] = parcel_id
             f.attributes['address'] = i['address']
             f.attributes['location'] = i['location']
             f.attributes['apt_number'] = i['apt_number']
             f.attributes['city_code'] = i['city_code']
             f.attributes['city_desc'] = i['city_desc']
             f.attributes['state'] = ['state']
-            f.attributes['map_index'] = i['map_index']
+            f.attributes['map_index'] = map_index
             f.attributes['latitude'] = lat
             f.attributes['longitude'] = long
             f.attributes['usng'] = usng
@@ -172,6 +204,11 @@ for i in incident_push:
             f.attributes['boxalarm_fire'] = boxalarm_fire
             f.attributes['boxalarm_medical'] = boxalarm_medical
             f.attributes['boxalarm_wildland'] = boxalarm_wildland
+            f.attributes['structure_desc'] = structure_desc
+            f.attributes['structure_livingarea'] = structure_livingarea
+            f.attributes['structure_numbbeds'] = structure_numbbeds
+            f.attributes['structure_assessvalue'] = structure_assessvalue
+            f.attributes['structure_taxvalue'] = structure_taxvalue
 
             # Create empty list for new GIS features
             feature_list = [f]
