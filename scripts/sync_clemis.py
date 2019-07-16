@@ -1,7 +1,7 @@
 """
 Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
 
-The sync_clemis script ...
+The sync_clemis.py script is run by cron-worker every three minutes...
 """
 
 import connectdispatch

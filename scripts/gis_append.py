@@ -1,4 +1,8 @@
-"""To be completed..."""
+"""
+Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
+
+The gis_append script is activated when incident_push.p is modified in the watch directory.
+"""
 
 from connectdispatch import fireops
 import logging

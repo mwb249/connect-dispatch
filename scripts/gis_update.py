@@ -1,4 +1,8 @@
-"""To be completed..."""
+"""
+Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
+
+The gis_update.py script is activated when incident_sync.p is modified in the watch directory.
+"""
 
 import logging
 import os

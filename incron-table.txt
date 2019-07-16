@@ -1,0 +1,2 @@
+/connectdispatch-data/watch/email_incident_list IN_CLOSE_WRITE,IN_NO_LOOP python /connectdispatch/scripts/push_clemis_email.py
+/connectdispatch-data/watch/ws_incident_list IN_CLOSE_WRITE,IN_NO_LOOP python /connectdispatch/scripts/push_clemis_ws.py

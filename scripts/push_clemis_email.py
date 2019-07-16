@@ -1,7 +1,9 @@
 """
 Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
 
-The push_clemis_email script ...
+The push_clemis_email is executed by Postfix when an email is received to the configured address. The message is pulled
+into the script by sys.stdin and parsed. The new data is written to files. From there it is detected and managed the gis
+append script.
 """
 
 import connectdispatch

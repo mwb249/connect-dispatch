@@ -1,0 +1,45 @@
+version: '2'
+
+services:
+
+  incron:
+    build:
+      context: .
+      dockerfile: docker/incron-worker/Dockerfile
+    hostname: connectdisp-incron-worker
+    container_name: incron-worker
+    volumes:
+      - config:/connect-dispatch/scripts/config
+      - watch:/connect-dispatch/scripts/watch
+    restart: always
+
+  cron:
+    build:
+      context: .
+      dockerfile: docker/cron-worker/Dockerfile
+    hostname: connectdisp-cron-worker
+    container_name: cron-worker
+    volumes:
+      - config:/connect-dispatch/scripts/config
+      - watch:/connect-dispatch/scripts/watch
+    restart: always
+
+  mail:
+    build:
+      context: .
+      dockerfile: docker/smtp-listener/Dockerfile
+    hostname: connectdisp-smtp-listener
+    domainname: indtwp.us
+    container_name: smtp-listener
+    ports:
+    - "25:25"
+    volumes:
+    - config:/connect-dispatch/scripts/config
+    - watch:/connect-dispatch/scripts/watch
+    restart: always
+
+volumes:
+    config:
+      driver: local
+    watch:
+      driver: local
