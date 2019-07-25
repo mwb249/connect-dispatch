@@ -1,6 +1,6 @@
 """
 The clemis module contains functions related to obtaining and manipulating incident data received through the CLEMIS
-CAD web service or D-Card web page.
+CAD web service or Dispatch Card (D-Card) web page.
 """
 
 from datetime import datetime, timedelta
