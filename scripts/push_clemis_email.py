@@ -6,7 +6,6 @@ into the script by sys.stdin and parsed. The new data is written to files. From 
 append script.
 """
 
-import connectdispatch
 import logging
 import os
 import sys
@@ -37,16 +36,16 @@ inc_page = requests.get(incident_temp_url)
 soup = BeautifulSoup(inc_page.text, 'html.parser')
 
 # Build lists from HTML tables
-inc_details = connectdispatch.clemis.listfromtable(soup, 2)
-unit_details = connectdispatch.clemis.listfromtable(soup, 3)
-comments = connectdispatch.clemis.listfromtable(soup, 4)
+inc_details = clemis.listfromtable(soup, 2)
+unit_details = clemis.listfromtable(soup, 3)
+comments = clemis.listfromtable(soup, 4)
 
 # Construct empty incident_push list
 incident_push = []
 
 # Use incidentlist_email function to construct incident_push list
-incident_dict = connectdispatch.clemis.incidentdict_email(inc_details, unit_details, comments, incident_temp_url,
-                                                          push=True)
+incident_dict = clemis.incidentdict_email(inc_details, unit_details, comments, incident_temp_url,
+                                          push=True)
 
 # Append incident_dict to incident_push
 incident_push.append(incident_dict)

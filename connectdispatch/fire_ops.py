@@ -1,11 +1,16 @@
-"""To be completed..."""
+"""
+To be completed...
+"""
 
 from datetime import timedelta
 import pandas as pd
 
 
-def kellyshift(check_date, pattern_start_date, shift_start_time):
-    """To be completed..."""
+def kelly_shift(check_date, pattern_start_date, shift_start_time):
+    """
+    To be completed...
+    """
+
     # Check shift start time to correct date if necessary
     if 0 <= check_date.hour < shift_start_time:
         check_date = check_date - timedelta(days=1)

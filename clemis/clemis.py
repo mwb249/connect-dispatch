@@ -3,16 +3,16 @@ The clemis module contains functions related to obtaining and manipulating incid
 CAD web service or Dispatch Card (D-Card) web page.
 """
 
-from datetime import datetime, timedelta
 import pytz
 import requests
 import re
-import xmlutils
-import timeutils
+import xml_utils
+import time_utils
 from xml.etree import ElementTree
+from datetime import datetime, timedelta
 
 
-def getxml(hrs, cad_url, cad_user, cad_pass):
+def get_xml(hrs, cad_url, cad_user, cad_pass):
     """
     Makes a SOAP request to CLEMIS CAD web service and returns an XML object containing the CAD incident data for the
     past number of hours specified in the parameters.
@@ -49,7 +49,7 @@ def getxml(hrs, cad_url, cad_user, cad_pass):
 
     # Parse XML return with ElementTree
     full_xml = ElementTree.fromstring(r.content)
-    xmlutils.strip_xml_ns(full_xml)
+    xml_utils.strip_xml_ns(full_xml)
     return full_xml
 
 
@@ -167,18 +167,21 @@ def inc_cat_find(inc_type_desc):
     """
     Determines the incident category based on the incident type description.
     """
+
     fire = ['Residential Structure Fire', 'Commercial Structure Fire', 'Residential Fire (Full Response)',
             'Commercial Fire (Full Response)', 'Residential Fire (Box Alarm)', 'Commercial Fire (Box Alarm)',
-            'Vehicle Fire', 'Residential Fire (Still Response)', 'Commercial Fire (Still Response']
+            'Vehicle Fire', 'Residential Fire (Still Response)', 'Commercial Fire (Still Response)']
     fire_alarm = ['Commercial Fire Alarm', 'Residential Fire Alarm']
-    fire_hazard = ['Burning Complaint', 'Gas Leak', 'Outdoor Fire/Other', 'Smoke Investigation', 'Odor Investigation']
+    fire_hazard = ['Burning Complaint', 'Gas Leak', 'Outdoor Fire / Other', 'Smoke Investigation',
+                   'Odor Investigation']
     injury_accident = ['Injury Accident']
-    medical = ['Alpha Medical', 'Bravo Medical', 'Charlie Medical', 'Delta Medical', 'Echo Medical', 'Omega Medical',
-               'Medical Emergency', 'Medical Alarm']
+    medical = ['Alpha Medical', 'Bravo Medical', 'Charlie Medical', 'Delta Medical', 'Echo Medical',
+               'Omega Medical', 'Medical Emergency', 'Medical Alarm']
     assist_citizen = ['Assist Citizen', 'Lift Assist']
-    haz_condition = ['Tree Down', 'Down Tree', 'CO Investigation', 'Wires Down', 'Fuel Spill', 'Technical Rescue',
-                     'Trench Rescue', 'Road Hazard Fire']
-    mutaid = ['Mutual-Aid']
+    haz_condition = ['Tree Down', 'Down Tree', 'CO Investigation', 'Wires Down', 'Fuel Spill', 'Road Hazard',
+                     'Hazmat', 'Train Incident', 'Bomb Threat', 'Aircraft Incident']
+    tech_rescue = ['Technical Rescue', 'Trench Rescue', 'Water Rescue', 'Dive Team Activation']
+    mutaid = ['Mutual-Aid', 'MABAS Call']
     police_assist = ['Police Assist']
     if inc_type_desc in fire:
         category = 'Fire'
@@ -194,6 +197,8 @@ def inc_cat_find(inc_type_desc):
         category = 'Assist Citizen'
     elif inc_type_desc in haz_condition:
         category = 'Hazardous Condition'
+    elif inc_type_desc in tech_rescue:
+        category = 'Technical Rescue'
     elif inc_type_desc in mutaid:
         category = 'Mutual-Aid'
     elif inc_type_desc in police_assist:
@@ -210,6 +215,7 @@ def incidentdict_ws(i_dict, unit_list, push=False):
     version of the incident dictionary. The 'push' boolean parameter specifies whether the list will be used in a
     'push' capacity (certain key/value pairs are only pushed to the GIS during the initial append).
     """
+
     # Correct incident_type_code and incident_type_desc
     i_dict['incident_type_desc'] = i_dict.pop('incident_type_description')
     incident_type_code = i_dict['incident_type_code']
@@ -255,19 +261,19 @@ def incidentdict_ws(i_dict, unit_list, push=False):
     i_dict['incident_category'] = inc_cat_find(i_dict['incident_type_desc'])
 
     # Call datetime
-    i_dict['datetime_call'] = timeutils.incident_dt_ws(i_dict['datetime_call'])
+    i_dict['datetime_call'] = time_utils.incident_dt_ws(i_dict['datetime_call'])
 
     # Dispatch datetime
-    i_dict['datetime_dispatched'] = timeutils.unit_dt_from_dict(unit_list, i_dict, 'unit_dispatch_date')
+    i_dict['datetime_dispatched'] = time_utils.unit_dt_from_dict(unit_list, i_dict, 'unit_dispatch_date')
 
     # En Route datetime
-    i_dict['datetime_enroute'] = timeutils.unit_dt_from_dict(unit_list, i_dict, 'unit_enroute_date')
+    i_dict['datetime_enroute'] = time_utils.unit_dt_from_dict(unit_list, i_dict, 'unit_enroute_date')
 
     # Arrival datetime
-    i_dict['datetime_arrival'] = timeutils.unit_dt_from_dict(unit_list, i_dict, 'unit_arrive_date')
+    i_dict['datetime_arrival'] = time_utils.unit_dt_from_dict(unit_list, i_dict, 'unit_arrive_date')
 
     # Clear datetime
-    i_dict['datetime_clear'] = timeutils.incident_dt_ws(i_dict['datetime_clear'])
+    i_dict['datetime_clear'] = time_utils.incident_dt_ws(i_dict['datetime_clear'])
 
     # Chief Complaint
     match = re.search(r'CC: (.*)', i_dict['comments_text'])
@@ -355,11 +361,11 @@ def incidentdict_email(inc_details, unit_details, comments, inc_url, push=False)
         pass
 
     # Incident Times
-    datetime_call = timeutils.incident_dt_email(inc_details[6][1])
-    datetime_dispatched = timeutils.incident_dt_email(inc_details[7][1])
-    datetime_enroute = timeutils.incident_dt_email(inc_details[8][1])
-    datetime_arrival = timeutils.incident_dt_email(inc_details[9][1])
-    datetime_clear = timeutils.incident_dt_email(inc_details[10][1])
+    datetime_call = time_utils.incident_dt_email(inc_details[6][1])
+    datetime_dispatched = time_utils.incident_dt_email(inc_details[7][1])
+    datetime_enroute = time_utils.incident_dt_email(inc_details[8][1])
+    datetime_arrival = time_utils.incident_dt_email(inc_details[9][1])
+    datetime_clear = time_utils.incident_dt_email(inc_details[10][1])
 
     # Units Assigned
     units_assigned = []

@@ -4,7 +4,7 @@ Connect|DISPATCH: Connecting Computer-Aided Dispatch (CAD) Systems to ArcGIS.
 The gis_append script is activated when incident_push.p is modified in the watch directory.
 """
 
-from connectdispatch import fireops
+from connectdispatch import fire_ops
 import logging
 import os
 import yaml
@@ -143,7 +143,7 @@ for i in incident_push:
             # Determine shift on duty at time of call
             pattern_start = datetime.strptime(cfg['agencies'][agency]['shift_start_date'], '%m-%d-%Y')
             shift_start = cfg['agencies'][agency]['shift_start_time']
-            agency_shift = fireops.kellyshift(i['datetime_call'], pattern_start, shift_start)
+            agency_shift = fire_ops.kelly_shift(i['datetime_call'], pattern_start, shift_start)
 
             # Query tax parcel layer to get structure data
             fset_taxparcels = fl_taxparcels.query(where="SITEADDRESS LIKE  '" + i['address'] + "'",

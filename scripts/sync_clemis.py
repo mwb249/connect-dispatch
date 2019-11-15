@@ -33,13 +33,13 @@ if clemis_cfg['use_ws']:
                                       clemis_cfg['cad_pass'])
 
     # Get lists of dictionaries for incidents and comments based on returned XML
-    incident_list_full = connectdispatch.xmlutils.xmltolist(incident_tree, 'Incident')
-    unit_list_full = connectdispatch.xmlutils.xmltolist(incident_tree, 'Unit')
+    incident_list_full = connectdispatch.xml_utils.xmltolist(incident_tree, 'Incident')
+    unit_list_full = connectdispatch.xml_utils.xmltolist(incident_tree, 'Unit')
 
     # Update incident_sync file
     incident_sync = []
     for i in incident_list_full:
-        i = connectdispatch.clemis.incidentdict_ws(i, unit_list_full)
+        i = clemis.incidentdict_ws(i, unit_list_full)
         # If ws_plus_email is True, this code block will populate the incident_temp_url & location fields
         if clemis_cfg['ws_plus_email']:
             try:
@@ -92,13 +92,13 @@ else:
                 soup = BeautifulSoup(inc_page.text, 'html.parser')
 
                 # Build lists from HTML tables
-                inc_details = connectdispatch.clemis.listfromtable(soup, 2)
-                unit_details = connectdispatch.clemis.listfromtable(soup, 3)
-                comments = connectdispatch.clemis.listfromtable(soup, 4)
+                inc_details = clemis.listfromtable(soup, 2)
+                unit_details = clemis.listfromtable(soup, 3)
+                comments = clemis.listfromtable(soup, 4)
 
                 # Use incidentlist_email function to construct incident_push list
-                incident_dict = connectdispatch.clemis.incidentdict_email(inc_details, unit_details, comments,
-                                                                          incident_temp_url)
+                incident_dict = clemis.incidentdict_email(inc_details, unit_details, comments,
+                                                          incident_temp_url)
 
                 # Append incident_dict to incident_sync
                 incident_sync.append(incident_dict)
